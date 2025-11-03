@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="form-page">
+  <h1>Login (solo demo)</h1>
+  <div class="card card-glass">
+    <form id="loginForm">
+      <label>Email
+        <input name="email" type="email" required>
+      </label>
+      <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+    </form>
+  </div>
+  <button id="logoutBtn" type="button" class="btn btn-ghost">Cerrar sesión</button>
+</section>
+<script>
+const loginForm = document.getElementById('loginForm');
+loginForm.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const { email } = Object.fromEntries(new FormData(e.target).entries());
+  const list = await apiGet('/api/users?per_page=100');
+  if (!list.ok) {
+    const message = list.details ? Object.values(list.details).join(', ') : (list.error || 'No se pudo obtener la lista de usuarios');
+    showMessage(message, 'error');
+    return;
+  }
+  const items = list.items || [];
+  const user = items.find(u => u.email === email);
+  if (user){
+    localStorage.setItem('demo_user', JSON.stringify(user));
+    showMessage('Login demo correcto', 'success');
+    window.location.href = '/users';
+  } else {
+    showMessage('No existe un usuario con ese email', 'error');
+  }
+});
+
+document.getElementById('logoutBtn').onclick = ()=>{
+  localStorage.removeItem('demo_user');
+  showMessage('Sesión demo cerrada', 'info');
+};
+</script>
+{% endblock %}

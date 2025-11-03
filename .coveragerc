@@ -1,0 +1,10 @@
+[run]
+branch = True
+source = app
+omit =
+    app/pages/__init__.py
+    migrations/*
+    tests/*
+
+[report]
+skip_empty = True
