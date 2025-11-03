@@ -5,7 +5,7 @@ from __future__ import annotations
 from flask import Flask, jsonify
 
 from .config import get_config
-from .extensions import db, ma, migrate
+from .store import reset_store
 
 
 def register_error_handlers(app: Flask) -> None:
@@ -24,15 +24,19 @@ def register_error_handlers(app: Flask) -> None:
         return jsonify({"error": "Internal server error."}), 500
 
 
-def create_app(config_name: str | None = None) -> Flask:
+def create_app(testing: bool = False) -> Flask:
     """Create and configure a :class:`~flask.Flask` application instance."""
 
-    app = Flask(__name__)
-    app.config.from_object(get_config(config_name))
+    app = Flask(
+        __name__, template_folder="templates", static_folder="static"
+    )
 
-    db.init_app(app)
-    migrate.init_app(app, db)
-    ma.init_app(app)
+    config_name = "test" if testing else None
+    app.config.from_object(get_config(config_name))
+    app.config["TESTING"] = testing
+
+    if testing:
+        reset_store()
 
     from .pages import pages_bp
     from .routes.users import users_bp
@@ -42,10 +46,11 @@ def create_app(config_name: str | None = None) -> Flask:
 
     register_error_handlers(app)
 
-    @app.shell_context_processor
-    def make_shell_context():  # pragma: no cover - developer convenience
-        from .models import User
+    if testing:
 
-        return {"db": db, "User": User}
+        @app.post("/api/_debug/reset")
+        def debug_reset():
+            reset_store()
+            return "", 204
 
     return app
