@@ -3,7 +3,7 @@
 <section class="form-page">
   <h1>Registrar usuario</h1>
   <div class="card card-glass">
-    <form id="registerForm">
+    <form id="register-form">
       <label>Nombre
         <input name="name" required minlength="2" maxlength="80">
       </label>
@@ -17,18 +17,4 @@
     </form>
   </div>
 </section>
-<script>
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
-  const res = await apiPost('/api/users', data);
-  if (res.ok) {
-    showMessage('Usuario creado', 'success');
-    e.target.reset();
-  } else {
-    const message = res.details ? Object.values(res.details).join(', ') : (res.error || 'Error al crear');
-    showMessage(message, 'error');
-  }
-});
-</script>
 {% endblock %}
