@@ -1,4 +1,4 @@
-"""Blueprint exposing HTML pages for the demo frontend."""
+"""Blueprint exposing HTML pages for the web frontend."""
 
 from flask import Blueprint
 

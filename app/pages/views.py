@@ -1,4 +1,4 @@
-"""Server-rendered page routes for the demo frontend."""
+"""Server-rendered page routes for the user portal."""
 
 from flask import render_template
 
@@ -19,11 +19,17 @@ def register():
 
 @pages_bp.get("/login")
 def login():
-    """Render the demo login page."""
-    return render_template("login.html", title="Login demo")
+    """Render the login page."""
+    return render_template("login.html", title="Iniciar sesión")
 
 
 @pages_bp.get("/users")
 def users():
     """Render the users listing page."""
     return render_template("users.html", title="Usuarios")
+
+
+@pages_bp.get("/muro")
+def muro():
+    """Render the wall page."""
+    return render_template("muro.html", title="Muro de comentarios")

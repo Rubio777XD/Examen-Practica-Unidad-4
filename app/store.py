@@ -1,18 +1,22 @@
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any, Dict
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
-from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 USERS: Dict[int, Dict[str, Any]] = {}
 NEXT_ID: int = 1
+POSTS: List[Dict[str, Any]] = []
+NEXT_POST_ID: int = 1
 
 
 def reset_store() -> None:
-    global USERS, NEXT_ID
+    global USERS, NEXT_ID, POSTS, NEXT_POST_ID
     USERS = {}
     NEXT_ID = 1
+    POSTS = []
+    NEXT_POST_ID = 1
 
 
 def _public_user(user: Dict[str, Any]) -> Dict[str, Any]:
@@ -46,6 +50,23 @@ def get_user(uid: int):
     return None if not user else _public_user(user)
 
 
+def _find_user_by_email(email: str) -> Optional[Dict[str, Any]]:
+    lowered = email.lower()
+    for user in USERS.values():
+        if user["email"].lower() == lowered:
+            return user
+    return None
+
+
+def authenticate_user(email: str, password: str) -> Optional[Dict[str, Any]]:
+    user = _find_user_by_email(email)
+    if not user:
+        return None
+    if not check_password_hash(user["password_hash"], password):
+        return None
+    return _public_user(user)
+
+
 def update_user(
     uid: int,
     *,
@@ -74,6 +95,30 @@ def delete_user(uid: int) -> bool:
     return USERS.pop(uid, None) is not None
 
 
+def create_post(content: str, author: Optional[str]) -> Dict[str, Any]:
+    global NEXT_POST_ID, POSTS
+    text = (content or "").strip()
+    if not text:
+        raise ValueError("invalid_content")
+    if len(text) > 500:
+        raise ValueError("invalid_content")
+    post = {
+        "id": NEXT_POST_ID,
+        "author": (author or "").strip() or "Anónimo",
+        "content": text,
+        "created_at": datetime.now(timezone.utc)
+        .isoformat(timespec="seconds")
+        .replace("+00:00", "Z"),
+    }
+    NEXT_POST_ID += 1
+    POSTS.append(post)
+    return post
+
+
+def list_posts() -> List[Dict[str, Any]]:
+    return list(reversed(POSTS))
+
+
 __all__ = [
     "create_user",
     "delete_user",
@@ -81,6 +126,11 @@ __all__ = [
     "list_users",
     "reset_store",
     "update_user",
+    "authenticate_user",
+    "create_post",
+    "list_posts",
     "USERS",
     "NEXT_ID",
+    "POSTS",
+    "NEXT_POST_ID",
 ]

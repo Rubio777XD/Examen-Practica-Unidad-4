@@ -1,45 +1,45 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="form-page">
-  <h1>Login (solo demo)</h1>
+  <h1>Iniciar sesión</h1>
   <div class="card card-glass">
-    <form id="loginForm">
+    <form id="login-form">
       <label>Email
-        <input name="email" type="email" required>
+        <input name="email" type="email" required autocomplete="email">
       </label>
-      <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+      <label>Contraseña
+        <input name="password" type="password" required minlength="8" autocomplete="current-password">
+      </label>
+      <button type="submit" class="btn btn-primary">Ingresar</button>
     </form>
   </div>
-  <button id="logoutBtn" type="button" class="btn btn-ghost">Cerrar sesión</button>
+  <p class="form-note">¿No tienes cuenta? <a href="{{ url_for('pages.register') }}">Regístrate aquí</a>.</p>
 </section>
 <script>
-const loginForm = document.getElementById('loginForm');
-if (loginForm) {
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const { email } = Object.fromEntries(new FormData(loginForm).entries());
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.getAuthUser && window.getAuthUser()) {
+    window.location.replace('/');
+    return;
+  }
+
+  const form = document.getElementById('login-form');
+  if (!form) return;
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(form).entries());
     try {
-      const users = await api('/api/users');
-      const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-      if (user) {
-        localStorage.setItem('demo_user', JSON.stringify(user));
-        showMessage('Login demo correcto', 'success');
-        window.location.href = '/users';
-      } else {
-        showMessage('No existe un usuario con ese email', 'error');
+      const user = await window.api('/api/auth/login', { method: 'POST', body: data });
+      if (window.setAuthUser) {
+        window.setAuthUser(user);
       }
+      window.showMessage('Sesión iniciada correctamente', 'success');
+      window.location.replace('/');
     } catch (err) {
-      showMessage(errorMessageFrom(err), 'error');
+      const message = err?.status === 401 ? 'Credenciales inválidas' : window.errorMessageFrom(err);
+      window.showMessage(message, 'error');
     }
   });
-}
-
-const logoutBtn = document.getElementById('logoutBtn');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', () => {
-    localStorage.removeItem('demo_user');
-    showMessage('Sesión demo cerrada', 'info');
-  });
-}
+});
 </script>
 {% endblock %}
