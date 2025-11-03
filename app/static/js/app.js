@@ -1,28 +1,28 @@
-async function api(method, url, body) {
-  const options = {
-    method,
+async function api(path, opts = {}) {
+  const config = {
     headers: { 'Content-Type': 'application/json' },
+    method: 'GET',
+    ...opts,
   };
-  if (body !== undefined) {
-    options.body = JSON.stringify(body);
+  if (config.body && typeof config.body !== 'string') {
+    config.body = JSON.stringify(config.body);
   }
-  const response = await fetch(url, options);
-  let data = null;
+  const res = await fetch(path, config);
+  let body = null;
   try {
-    data = await response.json();
-  } catch (error) {
-    data = null;
+    body = await res.json();
+  } catch (_) {
+    body = null;
   }
-  if (!response.ok) {
-    return { ok: false, status: response.status, ...(data || {}) };
+  if (!res.ok) {
+    const message = (body && (body.error || body.message)) || `HTTP ${res.status}`;
+    const error = new Error(message);
+    error.status = res.status;
+    error.body = body;
+    throw error;
   }
-  return { ok: true, status: response.status, ...(data || {}) };
+  return body;
 }
-
-const apiGet = (url) => api('GET', url);
-const apiPost = (url, body) => api('POST', url, body);
-const apiPut = (url, body) => api('PUT', url, body);
-const apiDelete = (url) => api('DELETE', url);
 
 function showMessage(message, type = 'info') {
   const toast = document.getElementById('toast');
@@ -41,29 +41,89 @@ function showMessage(message, type = 'info') {
   }, 2500);
 }
 
-function getDemoUser() {
-  const raw = localStorage.getItem('demo_user');
-  if (!raw) return null;
+function errorMessageFrom(err) {
+  const code = err?.body?.error || String(err?.message || '');
+  if (code.includes('email_already_exists')) return 'Ese correo ya está registrado';
+  if (code.includes('validation_error')) return 'Datos inválidos';
+  if (code.includes('not_found')) return 'No encontrado';
+  return 'Error interno';
+}
+
+async function loadUsers() {
+  const tbody = document.querySelector('#users-tbody');
+  if (!tbody) return;
   try {
-    return JSON.parse(raw);
-  } catch (error) {
-    return null;
+    const rows = await api('/api/users');
+    tbody.innerHTML = rows
+      .map(
+        (u) => `
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.name}</td>
+          <td>${u.email}</td>
+          <td>
+            <button class="btn btn-ghost" data-action="delete" data-id="${u.id}">Eliminar</button>
+          </td>
+        </tr>`
+      )
+      .join('');
+  } catch (err) {
+    showMessage(errorMessageFrom(err), 'error');
   }
 }
 
-function setDemoUser(user) {
-  localStorage.setItem('demo_user', JSON.stringify(user));
+function setupUsersTable() {
+  const tbody = document.querySelector('#users-tbody');
+  if (!tbody) return;
+  tbody.addEventListener('click', async (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.dataset.action !== 'delete') return;
+    const uid = target.dataset.id;
+    if (!uid) return;
+    if (!confirm(`¿Eliminar usuario ${uid}?`)) return;
+    try {
+      await api(`/api/users/${uid}`, { method: 'DELETE' });
+      showMessage('Usuario eliminado', 'success');
+      await loadUsers();
+    } catch (err) {
+      showMessage(errorMessageFrom(err), 'error');
+    }
+  });
 }
 
-function clearDemoUser() {
-  localStorage.removeItem('demo_user');
+function setupRegisterForm() {
+  const form = document.querySelector('#register-form');
+  if (!form) return;
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = Object.fromEntries(new FormData(form).entries());
+    try {
+      await api('/api/users', { method: 'POST', body: data });
+      showMessage('Usuario creado', 'success');
+      form.reset();
+      if (location.pathname === '/users') {
+        await loadUsers();
+      }
+    } catch (err) {
+      showMessage(errorMessageFrom(err), 'error');
+    }
+  });
 }
 
-window.apiGet = apiGet;
-window.apiPost = apiPost;
-window.apiPut = apiPut;
-window.apiDelete = apiDelete;
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    setupRegisterForm();
+    setupUsersTable();
+    if (location.pathname === '/users') loadUsers();
+  });
+} else {
+  setupRegisterForm();
+  setupUsersTable();
+  if (location.pathname === '/users') loadUsers();
+}
+
+window.api = api;
+window.errorMessageFrom = errorMessageFrom;
 window.showMessage = showMessage;
-window.getDemoUser = getDemoUser;
-window.setDemoUser = setDemoUser;
-window.clearDemoUser = clearDemoUser;
+window.loadUsers = loadUsers;

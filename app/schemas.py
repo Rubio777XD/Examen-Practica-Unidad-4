@@ -1,5 +1,3 @@
-"""Marshmallow schemas for serialising and validating payloads."""
-
 from __future__ import annotations
 
 from marshmallow import Schema, fields, post_load, validates
@@ -8,17 +6,13 @@ from .validators import validate_name, validate_password
 
 
 class UserSchema(Schema):
-    """Schema used for serialising user dictionaries."""
-
-    id = fields.Int(required=True)
+    id = fields.Int(required=True, dump_only=True)
     name = fields.Str(required=True)
     email = fields.Email(required=True)
-    created_at = fields.Str(required=True)
+    created_at = fields.Str(required=True, dump_only=True)
 
 
 class UserCreateSchema(Schema):
-    """Schema used for validating user creation payloads."""
-
     name = fields.Str(required=True)
     email = fields.Email(required=True)
     password = fields.Str(required=True, load_only=True)
@@ -33,8 +27,6 @@ class UserCreateSchema(Schema):
 
 
 class UserUpdateSchema(Schema):
-    """Schema used for validating user update payloads."""
-
     name = fields.Str(required=False)
     email = fields.Email(required=False)
     password = fields.Str(required=False, load_only=True)
@@ -49,8 +41,6 @@ class UserUpdateSchema(Schema):
 
     @post_load
     def remove_empty(self, data: dict, **_: object) -> dict:
-        """Remove keys whose value is ``None``."""
-
         return {key: value for key, value in data.items() if value is not None}
 
 

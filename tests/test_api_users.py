@@ -8,34 +8,64 @@ def test_create_user_ok(client):
     )
     assert rv.status_code == 201
     data = rv.get_json()
-    assert data["name"] == "Ana"
-    assert "id" in data and "password_hash" not in data
+    assert data == {
+        "id": data["id"],
+        "name": "Ana",
+        "email": "ana@test.com",
+        "created_at": data["created_at"],
+    }
 
 
-def test_email_unico(client):
+def test_create_user_duplicate_email_conflict(client):
     client.post(
         "/api/users",
-        json={"name": "A", "email": "dup@test.com", "password": "secreto123"},
+        json={"name": "Ana", "email": "dup@test.com", "password": "secreto123"},
     )
     rv = client.post(
         "/api/users",
-        json={"name": "B", "email": "dup@test.com", "password": "secreto123"},
+        json={"name": "Ben", "email": "dup@test.com", "password": "secreto123"},
     )
-    assert rv.status_code in (400, 409)
+    assert rv.status_code == 409
+    assert rv.get_json() == {"error": "email_already_exists"}
 
 
-def test_list_users(client):
+def test_list_users_returns_users(client):
+    client.post(
+        "/api/users",
+        json={"name": "Ana", "email": "ana@test.com", "password": "secreto123"},
+    )
     rv = client.get("/api/users")
     assert rv.status_code == 200
-    assert isinstance(rv.get_json(), list)
+    body = rv.get_json()
+    assert isinstance(body, list)
+    assert body and {"id", "name", "email", "created_at"}.issubset(body[0].keys())
 
 
-def test_update_and_delete(client):
-    u = client.post(
+def test_get_user_not_found(client):
+    rv = client.get("/api/users/999")
+    assert rv.status_code == 404
+    assert rv.get_json() == {"error": "not_found"}
+
+
+def test_update_user_success(client):
+    created = client.post(
         "/api/users",
-        json={"name": "Bob", "email": "bob@test.com", "password": "secreto123"},
+        json={"name": "Ana", "email": "ana@test.com", "password": "secreto123"},
     ).get_json()
-    rv_up = client.put(f"/api/users/{u['id']}", json={"name": "Bob2"})
-    assert rv_up.status_code == 200 and rv_up.get_json()["name"] == "Bob2"
-    rv_del = client.delete(f"/api/users/{u['id']}")
-    assert rv_del.status_code in (200, 204)
+    rv = client.put(
+        f"/api/users/{created['id']}",
+        json={"name": "Ana María", "email": "ana2@test.com"},
+    )
+    assert rv.status_code == 200
+    assert rv.get_json()["email"] == "ana2@test.com"
+
+
+def test_delete_user_success(client):
+    created = client.post(
+        "/api/users",
+        json={"name": "Ana", "email": "ana@test.com", "password": "secreto123"},
+    ).get_json()
+    rv = client.delete(f"/api/users/{created['id']}")
+    assert rv.status_code == 204
+    rv_follow = client.get(f"/api/users/{created['id']}")
+    assert rv_follow.status_code == 404

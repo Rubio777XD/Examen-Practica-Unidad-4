@@ -2,48 +2,11 @@
 {% block content %}
 <section class="card card-glass table-wrapper">
   <h1>Usuarios</h1>
-  <table id="usersTable" class="table table-neon">
+  <table class="table table-neon">
     <thead>
       <tr><th>ID</th><th>Nombre</th><th>Email</th><th>Acciones</th></tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="users-tbody"></tbody>
   </table>
 </section>
-<script>
-(async ()=>{
-  const data = await apiGet('/api/users?per_page=50');
-  const tbody = document.querySelector('#usersTable tbody');
-  if (!data.ok) {
-    const message = data.details ? Object.values(data.details).join(', ') : (data.error || 'No se pudo obtener el listado');
-    showMessage(message, 'error');
-    return;
-  }
-  (data.items || []).forEach(u=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${u.id}</td><td>${u.name}</td><td>${u.email}</td>
-      <td>
-        <div class="actions">
-          <button data-id="${u.id}" class="btn btn-ghost del">Eliminar</button>
-        </div>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-  tbody.addEventListener('click', async (e)=>{
-    if(e.target.classList.contains('del')){
-      const id = e.target.dataset.id;
-      if (confirm('¿Eliminar usuario ' + id + '?')) {
-        const res = await apiDelete('/api/users/'+id);
-        if (res.ok){
-          showMessage('Eliminado', 'success');
-          e.target.closest('tr').remove();
-        } else {
-          const message = res.details ? Object.values(res.details).join(', ') : (res.error || 'Error al eliminar');
-          showMessage(message, 'error');
-        }
-      }
-    }
-  });
-})();
-</script>
 {% endblock %}
