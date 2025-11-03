@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-from .models import User
+from marshmallow import Schema, fields, post_load, validates
+
 from .validators import validate_name, validate_password
 
 
 class UserSchema(Schema):
-    """Schema used for serialising :class:`~app.models.User` instances."""
+    """Schema used for serialising user dictionaries."""
 
     id = fields.Int(required=True)
     name = fields.Str(required=True)
     email = fields.Email(required=True)
-    created_at = fields.DateTime(required=True)
+    created_at = fields.Str(required=True)
 
 
 class UserCreateSchema(Schema):
