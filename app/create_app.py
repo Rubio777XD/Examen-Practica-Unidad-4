@@ -12,13 +12,15 @@ def create_app(testing: bool = False) -> Flask:
     app.config.from_object(get_config(config_name))
     app.config.update(TESTING=testing)
 
-    from .routes.users import users_bp
+    from .routes import auth_bp, users_bp, wall_bp
     from .pages import pages_bp
 
     if testing:
         reset_store()
 
+    app.register_blueprint(auth_bp)
     app.register_blueprint(users_bp)
+    app.register_blueprint(wall_bp)
     app.register_blueprint(pages_bp)
 
     @app.get("/api/health")

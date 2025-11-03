@@ -16,8 +16,9 @@
           <a href="{{ url_for('pages.index') }}">Inicio</a>
           <a href="{{ url_for('pages.register') }}">Registrar</a>
           <a href="{{ url_for('pages.users') }}">Usuarios</a>
+          <a href="{{ url_for('pages.muro') }}">Muro</a>
         </div>
-        <a class="btn btn-primary" href="{{ url_for('pages.login') }}">Login (demo)</a>
+        <a class="btn btn-primary" id="auth-link" href="{{ url_for('pages.login') }}">Iniciar sesión</a>
       </nav>
     </div>
   </header>

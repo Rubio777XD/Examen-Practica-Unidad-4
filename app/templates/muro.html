@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="wall-page">
+  <h1>Muro de comentarios</h1>
+  <p class="form-note">Comparte un mensaje con la comunidad. Los comentarios se muestran de más reciente a más antiguo.</p>
+  <div class="card card-glass wall-form">
+    <form id="wall-form">
+      <label for="wall-content">Escribe tu mensaje</label>
+      <textarea id="wall-content" name="content" rows="4" maxlength="500" required placeholder="Comparte una idea, saludo o comentario..."></textarea>
+      <div class="wall-actions">
+        <span id="wall-identity" class="wall-identity">Publicarás como <strong>Anónimo</strong></span>
+        <button type="submit" class="btn btn-primary">Publicar</button>
+      </div>
+    </form>
+  </div>
+  <div class="card card-glass wall-list">
+    <h2>Últimos mensajes</h2>
+    <div id="wall-posts" class="wall-posts"></div>
+  </div>
+</section>
+{% endblock %}

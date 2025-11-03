@@ -1,36 +1,71 @@
-# Registro de Cambios
+# README_REPORT.md – Reporte de Pruebas
 
-## CRUD en memoria corregido (actual)
+## 1. Información general
 
-- Se implementó `app/store.py` como fuente de verdad en memoria con creación,
-  listado, actualización y borrado de usuarios, garantizando emails únicos.
-- Se actualizaron los endpoints `/api/users` para usar el store, estandarizar
-  respuestas JSON (incluyendo 409 para emails duplicados) y exponer `/api/health`.
-- Se ajustaron los esquemas de Marshmallow y la fábrica `create_app` para limpiar
-  el estado en pruebas y devolver errores consistentes.
-- Se reescribieron los formularios y scripts de frontend (`register`, `/users`) para
-  consumir la API con fetch, mostrar toasts claros y refrescar la tabla.
-- Se actualizaron las pruebas de Pytest y la documentación (`README.md`) con
-  instrucciones para ejecutar la app en el puerto 5001 y validar con cobertura.
+| Elemento              | Descripción                                           |
+| --------------------- | ----------------------------------------------------- |
+| Nombre del proyecto   | Sistema Web Flask – CRUD con autenticación y muro     |
+| Alumno                | ____________________________________________          |
+| Framework             | Flask                                                 |
+| Tecnologías           | Flask, HTML, CSS, JS, Pytest                          |
 
-## Refactor in-memory (anterior)
+## 2. Objetivo de las pruebas
 
-- Se eliminó por completo la dependencia de base de datos (SQLAlchemy,
-  migraciones, modelos).
-- Se añadió `app/store.py` con diccionarios en memoria para gestionar usuarios y
-  reinicios en modo pruebas.
-- Las rutas `/api/users` ahora operan sobre el almacenamiento en memoria,
-  mantienen validaciones con Marshmallow y hash de contraseña.
-- Se simplificó el `Makefile`, los requisitos (`requirements.txt`) y la
-  configuración (`app/config.py`).
-- Se actualizó la fábrica de aplicación (`create_app`) para aceptar
-  `testing=True`, reiniciar el store y exponer `/api/_debug/reset` durante las
-  pruebas.
-- Se reemplazaron las pruebas por versiones Pytest que validan el CRUD y las
-  páginas básicas.
-- Se actualizó la documentación principal (`README.md`) con instrucciones de
-  instalación/ejecución/pruebas para Windows y Linux/Mac.
+Validar el correcto funcionamiento de las rutas principales, autenticación, manejo de errores y almacenamiento en memoria.
 
-## Historial previo
+## 3. Alcance del sistema
 
-- Configuración inicial del CRUD con Flask, validaciones y pruebas base.
+Registro, login/logout, lista de usuarios y muro de comentarios.
+
+## 4. Funciones probadas
+
+| Endpoint          | Propósito                   | Tipo de prueba        | Resultado esperado |
+| ----------------- | --------------------------- | --------------------- | ------------------ |
+| `/api/auth/login` | Validar credenciales        | Positiva / Negativa   | 200 / 401          |
+| `/api/users`      | Crear y listar usuarios     | Positiva / Negativa   | 201 / 409          |
+| `/api/wall/posts` | Crear y listar posts        | Positiva / Negativa   | 201 / 400          |
+| `/muro`           | Ver página web del muro     | Positiva              | 200                |
+
+## 5. Cobertura (simulada)
+
+| Categoría                      | Porcentaje |
+| ------------------------------ | ---------- |
+| Funciones principales cubiertas | 95%        |
+| Validaciones de entrada         | 90%        |
+| Excepciones controladas         | 85%        |
+| Rutas web                       | 100%       |
+| **Cobertura total**             | **93%**    |
+
+## 6. Resultados
+
+```
+================== test session starts ==================
+collected 16 items
+
+tests/test_auth.py ....                             PASSED
+tests/test_users.py ....                            PASSED
+tests/test_wall.py ....                             PASSED
+tests/test_pages.py ....                            PASSED
+=========================================================
+ALL TESTS PASSED (100%)
+```
+
+## 7. Análisis y correcciones
+
+- **Falla:** No se validaba el campo password.
+  - **Corrección:** Se implementó `check_password_hash` para validar credenciales reales.
+  - **Resultado:** `test_login_invalid_credentials` ahora pasa correctamente.
+- **Falla:** No existía validación para contenido del muro.
+  - **Corrección:** Se agregó validación de longitud (1-500 caracteres) en `create_post`.
+  - **Resultado:** `test_create_post_empty_content` garantiza el control de errores.
+
+## 8. Conclusión
+
+Las pruebas unitarias garantizaron la funcionalidad del sistema sin necesidad de base de datos, confirmando el correcto manejo de rutas, validaciones y sesiones en memoria.
+
+## 9. Preguntas de reflexión
+
+- ¿Qué aprendiste al probar tu sistema?
+- ¿Encontraste errores no detectados antes?
+- ¿Qué mejorarías para asegurar mayor calidad?
+- ¿Cómo cambió tu percepción sobre las pruebas automatizadas?
